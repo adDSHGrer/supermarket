@@ -61,9 +61,12 @@ const formData = reactive({
 })
 
 const submit = () => {
+  // TODO: implement login logic
+  console.log(formData)
   if (validate()) {
     init({ message: "You've successfully logged in", color: 'success' })
     push({ name: 'dashboard' })
+    // TODO: redirect to dashboard
   }
 }
 </script>

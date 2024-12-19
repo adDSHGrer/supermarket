@@ -2,39 +2,25 @@
   <VaNavbar class="app-layout-navbar py-2 px-0">
     <template #left>
       <div class="left">
-        <Transition v-if="isMobile" name="icon-fade" mode="out-in">
-          <VaIcon
-            color="primary"
-            :name="isSidebarMinimized ? 'menu' : 'close'"
-            size="24px"
-            style="margin-top: 3px"
-            @click="isSidebarMinimized = !isSidebarMinimized"
-          />
-        </Transition>
-        <RouterLink to="/" aria-label="Visit home page">
-          <VuesticLogo />
-        </RouterLink>
+        <span class="welcome-message">管理员您好，欢迎进入超市结算系统</span>
       </div>
     </template>
     <template #right>
-      <AppNavbarActions class="app-navbar__actions" :is-mobile="isMobile" />
+      <div class="right">
+        <img
+          src="https://img-bsy.txrpic.com/Element/00/88/63/12/549f4792_E886312_4b2c4691XZ.png?imageMogr2/quality/90/thumbnail/320x%3E"
+          alt="用户头像"
+          class="user-avatar"
+        />
+        <span class="username">admin</span>
+      </div>
     </template>
   </VaNavbar>
 </template>
-
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useGlobalStore } from '../../stores/global-store'
-import AppNavbarActions from './components/AppNavbarActions.vue'
-import VuesticLogo from '../VuesticLogo.vue'
-
 defineProps({
   isMobile: { type: Boolean, default: false },
 })
-
-const GlobalStore = useGlobalStore()
-
-const { isSidebarMinimized } = storeToRefs(GlobalStore)
 </script>
 
 <style lang="scss" scoped>
@@ -66,7 +52,22 @@ const { isSidebarMinimized } = storeToRefs(GlobalStore)
     margin-right: 0;
   }
 }
+.right {
+  display: flex;
+  align-items: center;
+}
 
+.user-avatar {
+  width: 40px; /* 你可以根据需要调整头像大小 */
+  height: 40px; /* 你可以根据需要调整头像大小 */
+  border-radius: 50%; /* 圆形头像 */
+  margin-right: 10px; /* 头像与用户名之间的间距 */
+}
+
+.username {
+  font-size: 16px; /* 字体大小 */
+  color: #333; /* 字体颜色，可以根据需要调整 */
+}
 .icon-fade-enter-active,
 .icon-fade-leave-active {
   transition: transform 0.5s ease;
@@ -75,5 +76,11 @@ const { isSidebarMinimized } = storeToRefs(GlobalStore)
 .icon-fade-enter,
 .icon-fade-leave-to {
   transform: scale(0.5);
+}
+.welcome-message {
+  font-size: 18px; /* 增大字体大小 */
+  font-weight: bold; /* 加粗字体 */
+  color: #007bff; /* 调整字体颜色 */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
 }
 </style>

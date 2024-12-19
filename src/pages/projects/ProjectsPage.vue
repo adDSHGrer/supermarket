@@ -1,152 +1,117 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
-import { useProjects } from './composables/useProjects'
-import ProjectCards from './widgets/ProjectCards.vue'
-import ProjectTable from './widgets/ProjectsTable.vue'
-import EditProjectForm from './widgets/EditProjectForm.vue'
-import { Project } from './types'
-import { useModal, useToast } from 'vuestic-ui'
 
-const doShowAsCards = useLocalStorage('projects-view', true)
+const products = ref([
+  { id: 1, name: '商品 A', price: 100, stock: 10, supplier: '供应商 A' },
+  { id: 2, name: '商品 B', price: 200, stock: 5, supplier: '供应商 B' },
+])
 
-const { projects, update, add, isLoading, remove, pagination, sorting } = useProjects()
+const searchTerm = ref('')
+const selectedProduct = ref(null)
 
-const projectToEdit = ref<Project | null>(null)
-const doShowProjectFormModal = ref(false)
-
-const editProject = (project: Project) => {
-  projectToEdit.value = project
-  doShowProjectFormModal.value = true
+function addProduct() {
+  const newProduct = {
+    id: products.value.length + 1,
+    name: '新商品',
+    price: 0,
+    stock: 0,
+    supplier: '新供应商',
+  }
+  products.value.push(newProduct)
 }
 
-const createNewProject = () => {
-  projectToEdit.value = null
-  doShowProjectFormModal.value = true
-}
-
-const { init: notify } = useToast()
-
-const onProjectSaved = async (project: Project) => {
-  doShowProjectFormModal.value = false
-  if ('id' in project) {
-    await update(project as Project)
-    notify({
-      message: 'Project updated',
-      color: 'success',
-    })
-  } else {
-    await add(project as Project)
-    notify({
-      message: 'Project created',
-      color: 'success',
-    })
+function editProduct(product) {
+  const index = products.value.findIndex((p) => p.id === product.id)
+  if (index !== -1) {
+    // 这里可以通过表单获取用户修改的信息
+    products.value[index] = { ...product, name: '修改后的商品名称' }
   }
 }
 
-const { confirm } = useModal()
-
-const onProjectDeleted = async (project: Project) => {
-  const response = await confirm({
-    title: 'Delete project',
-    message: `Are you sure you want to delete project "${project.project_name}"?`,
-    okText: 'Delete',
-    size: 'small',
-    maxWidth: '380px',
-  })
-
-  if (!response) {
-    return
-  }
-
-  await remove(project)
-  notify({
-    message: 'Project deleted',
-    color: 'success',
-  })
+function deleteProduct(productId) {
+  products.value = products.value.filter((product) => product.id !== productId)
 }
 
-const editFormRef = ref()
-
-const beforeEditFormModalClose = async (hide: () => unknown) => {
-  if (editFormRef.value.isFormHasUnsavedChanges) {
-    const agreed = await confirm({
-      maxWidth: '380px',
-      message: 'Form has unsaved changes. Are you sure you want to close it?',
-      size: 'small',
-    })
-    if (agreed) {
-      hide()
-    }
-  } else {
-    hide()
-  }
+function searchProducts() {
+  return products.value.filter((product) => product.name.includes(searchTerm.value))
 }
 </script>
 
 <template>
-  <h1 class="page-title">Projects</h1>
-
-  <VaCard>
-    <VaCardContent>
-      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-        <div class="flex flex-col md:flex-row gap-2 justify-start">
-          <VaButtonToggle
-            v-model="doShowAsCards"
-            color="background-element"
-            border-color="background-element"
-            :options="[
-              { label: 'Cards', value: true },
-              { label: 'Table', value: false },
-            ]"
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-semibold mb-4">商品信息管理</h1>
+    <section class="bg-white shadow-md rounded-lg p-6 mb-4">
+      <div class="flex justify-between items-center mb-4">
+        <div class="relative w-full">
+          <input
+            v-model="searchTerm"
+            placeholder="搜索商品名称..."
+            class="border border-gray-300 rounded-lg py-2 px-4 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <VaButton icon="add" @click="createNewProject">Project</VaButton>
+        <div class="flex space-x-2">
+          <button
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+            @click="addProduct"
+          >
+            新增商品
+          </button>
+          <button
+            v-if="selectedProduct"
+            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200"
+            @click="deleteProduct(selectedProduct.id)"
+          >
+            删除商品
+          </button>
+        </div>
       </div>
 
-      <ProjectCards
-        v-if="doShowAsCards"
-        :projects="projects"
-        :loading="isLoading"
-        @edit="editProject"
-        @delete="onProjectDeleted"
-      />
-      <ProjectTable
-        v-else
-        v-model:sort-by="sorting.sortBy"
-        v-model:sorting-order="sorting.sortingOrder"
-        v-model:pagination="pagination"
-        :projects="projects"
-        :loading="isLoading"
-        @edit="editProject"
-        @delete="onProjectDeleted"
-      />
-    </VaCardContent>
+      <table class="min-w-full bg-gray-100 rounded-lg overflow-hidden">
+        <thead class="bg-blue-500 text-white">
+          <tr>
+            <th class="py-2 px-4">ID</th>
+            <th class="py-2 px-4">名称</th>
+            <th class="py-2 px-4">价格</th>
+            <th class="py-2 px-4">库存数量</th>
+            <th class="py-2 px-4">供应商</th>
+            <th class="py-2 px-4">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="product in searchProducts()" :key="product.id" class="hover:bg-gray-200 transition duration-200">
+            <td class="border px-4 py-2">{{ product.id }}</td>
+            <td class="border px-4 py-2">{{ product.name }}</td>
+            <td class="border px-4 py-2">{{ product.price }}</td>
+            <td class="border px-4 py-2">{{ product.stock }}</td>
+            <td class="border px-4 py-2">{{ product.supplier }}</td>
+            <td class="border px-4 py-2">
+              <button class="bg-yellow-500 text-white px-2 rounded hover:bg-yellow-400" @click="editProduct(product)">
+                编辑
+              </button>
+              <button
+                class="bg-gray-500 text-white px-2 rounded hover:bg-gray-400 ml-2"
+                @click="selectedProduct = product"
+              >
+                选择
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
-    <VaModal
-      v-slot="{ cancel, ok }"
-      v-model="doShowProjectFormModal"
-      size="small"
-      mobile-fullscreen
-      close-button
-      stateful
-      hide-default-actions
-      :before-cancel="beforeEditFormModalClose"
-    >
-      <h1 v-if="projectToEdit === null" class="va-h5 mb-4">Add project</h1>
-      <h1 v-else class="va-h5 mb-4">Edit project</h1>
-      <EditProjectForm
-        ref="editFormRef"
-        :project="projectToEdit"
-        :save-button-label="projectToEdit === null ? 'Add' : 'Save'"
-        @close="cancel"
-        @save="
-          (project) => {
-            onProjectSaved(project)
-            ok()
-          }
-        "
-      />
-    </VaModal>
-  </VaCard>
+    <div class="flex justify-between mt-4">
+      <div>
+        <!-- 分页逻辑（如适用） -->
+      </div>
+    </div>
+  </div>
 </template>
+
+<style>
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 2rem;
+}
+</style>
